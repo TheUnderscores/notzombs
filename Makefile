@@ -1,3 +1,19 @@
+# notzombs - top-down, procedurally generated zombie survival game
+# Copyright (C) 2015 Robert Cochran and others
+#
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 # Makefile - build script
 
 # build environment
@@ -40,14 +56,14 @@ CFLAGS      += -std=gnu99
 all: client server
 
 client:  $(CLIENT_OBJS)
-	$(CC) $(CFLAGS) $(CLIENT_OBJS) $(CLIENT_LINK) -o ct-client
+	$(CC) $(CFLAGS) $(CLIENT_OBJS) $(CLIENT_LINK) -o nz-client
 
 server:  $(SERVER_OBJS)
-	$(CC) $(CFLAGS) $(SERVER_OBJS) $(SERVER_LINK) -o ct-server
+	$(CC) $(CFLAGS) $(SERVER_OBJS) $(SERVER_LINK) -o nz-server
 
 debug: CFLAGS += -g
 debug: all
 
 clean:
-	$(RM) $(COMMON_OBJS) $(CLIENT_OBJS) $(SERVER_OBJS) ct-client ct-server
+	$(RM) $(COMMON_OBJS) $(CLIENT_OBJS) $(SERVER_OBJS) nz-client nz-server
 
