@@ -31,7 +31,7 @@ void freeCol(struct world *dest, unsigned int col)
 
 /* Global functions */
 
-struct world *createWorld(unsigned int w, unsigned int h, enum block_type defaultType)
+struct world* createWorld(unsigned int w, unsigned int h, enum block_type defaultType)
 {
 	struct world *newWorld = (struct world*)malloc(sizeof(struct world));
 	newWorld->w = w;
@@ -48,6 +48,8 @@ struct world *createWorld(unsigned int w, unsigned int h, enum block_type defaul
 			newWorld->grid[col][row] = block_common_new(defaultType);
 		}
 	}
+	
+	return newWorld;
 }
 
 void freeWorld(struct world *dest)
@@ -55,7 +57,6 @@ void freeWorld(struct world *dest)
 	unsigned int col;
 	for (col = 0; col < dest->h; col++){
 		freeCol(dest, col);
-		unsigned int row;
 	}
 	free(dest->grid);
 	free(dest);
@@ -63,6 +64,7 @@ void freeWorld(struct world *dest)
 
 void resizeWorld(struct world *dest, unsigned int new_w, unsigned int new_h)
 {
+	puts("Adjusting height...");
 	if (new_h > dest->h) {
 		unsigned int col;
 		for (col = 0; col < dest->w; col++) {
@@ -97,15 +99,21 @@ void resizeWorld(struct world *dest, unsigned int new_w, unsigned int new_h)
 		dest->h = new_h;
 	}
 	
+	puts("Adjusting width...");
 	if (new_w > dest->w) {
+		puts("Allocating new grid data...");
 		struct block_common_t ***newGridData = (struct block_common_t***)
 			malloc(sizeof(struct block_common_t) * new_w);
 		unsigned int col;
 		/* Reused block data */
+		puts("Reusing block data...");
 		for (col = 0; col < dest->w - 1; col++)
 			newGridData[col] = dest->grid[col];
 		/* Add new block data */
+		puts("Adding new block data...");
+
 		for (col = dest->w; col < new_w - 1; col++) {
+			printf("col: %d", col);
 			unsigned int row;
 			for (row = 0; row < new_h - 1; row++)
 				newGridData[col][row] = block_common_new(dest->defaultType);

@@ -16,7 +16,7 @@ SDL_Surface *loadSurface(SDL_Surface *optForSurf, char *filepath)
 		return NULL;
 	}
 	
-	optSurf = SDL_ConvertSurface(loadedSurf, optForSurf->format, NULL);
+	optSurf = SDL_ConvertSurface(loadedSurf, optForSurf->format, 0);
 	if (optSurf == NULL) {
 		printf("Unable to optimize image %s! SDL_image Error:",
 		       filepath,
