@@ -10,7 +10,7 @@ enum block_type {
 	BLOCK_TYPE_FLOOR,
 	
 	/* This is the total number of block types */
-	BLOCK_TYPE_TOTAL,
+	BLOCK_TYPE_TOTAL
 };
 
 struct block_common_t {
@@ -18,7 +18,7 @@ struct block_common_t {
 };
 
 
-struct *block_common_t block_common_new(enum block_type type);
-void block_common_free(struct *block_common_t block);
+struct block_common_t* block_common_new(enum block_type type);
+void block_common_free(struct block_common_t *block);
 
 #endif
