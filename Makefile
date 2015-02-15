@@ -20,7 +20,7 @@
 CC=gcc
 
 # source files
-COMMON_SOURCES := $(wildcard src/common/*.c)
+COMMON_SOURCES := $(wildcard src/common/*.c) src/common/parson/parson.c
 CLIENT_SOURCES := $(COMMON_SOURCES) $(wildcard src/client/*.c)
 SERVER_SOURCES := $(COMMON_SOURCES) $(wildcard src/server/*.c)
 
@@ -35,7 +35,7 @@ CLIENT_LINK := $(COMMON_LINK) -lSDL2 -lSDL2_net
 SERVER_LINK := $(COMMON_LINK)
 
 # Build flags
-INCLUDES    := -I include
+INCLUDES    := -I./include/ -I./src/common/parson/
 
 #BASEFLAGS   := -O2
 WARNFLAGS   := -Wall -Wextra -Wshadow -Wcast-align -Wwrite-strings -Winline
