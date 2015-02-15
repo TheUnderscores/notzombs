@@ -21,6 +21,10 @@
 
 #include <stdio.h>
 
+/* Test */
+#include "world_data_common.h"
+/* EOF Test */
+
 #define UNUSED(x) (void)(x)
 
 void show_SDL_error(const char *msg)
@@ -96,7 +100,10 @@ int main(int argc, char **argv)
 		show_SDL_error("Could not create window");
 		return -1;
 	}
-
+	
+        
+	
+	
 	puts("Created window");
 
 	puts("Going into main loop");
