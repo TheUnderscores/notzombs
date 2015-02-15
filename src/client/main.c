@@ -64,11 +64,9 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	printf("Resolved host \"%d\"\n", server_ip.host);
-
 	UDPsocket client_socket;
 
-	if (!(client_socket = SDLNet_UDP_Open(0))) {
+	if (!(client_socket = SDLNet_UDP_Open(12397))) {
 		show_SDLNet_error("Could not create UDP socket");
 		return -1;
 	}
@@ -112,9 +110,11 @@ int main(int argc, char **argv)
 
 		int recv_stat = SDLNet_UDP_Recv(client_socket, recv_packet);
 
-		if (recv_packet->len > 0)
+		if (recv_stat == 1)
 			printf("Got %d bytes - \"%s\"\n", recv_packet->len,
 			       recv_packet->data);
+		else if (recv_stat == 0)
+			show_SDLNet_error("No UDP packet received");
 		else if (recv_stat == -1)
 			show_SDLNet_error("Could not get UDP packet");
 	}
