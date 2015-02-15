@@ -32,7 +32,7 @@ SERVER_OBJS := $(patsubst %.c,%.o,$(SERVER_SOURCES))
 # link flags
 COMMON_LINK :=
 CLIENT_LINK := $(COMMON_LINK) -lSDL2 -lSDL2_net -lSDL2_image
-SERVER_LINK := $(COMMON_LINK)
+SERVER_LINK := $(COMMON_LINK) -lSDL2
 
 # Build flags
 INCLUDES    := -I./include/ -I./src/common/parson/
