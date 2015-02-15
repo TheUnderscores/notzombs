@@ -64,8 +64,6 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	printf("Resolved host \"%d\"\n", server_ip.host);
-
 	UDPsocket client_socket;
 
 	if (!(client_socket = SDLNet_UDP_Open(12397))) {
