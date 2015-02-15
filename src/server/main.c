@@ -29,14 +29,11 @@
 
 #include "parson.h"
 
-#define SERVER_PORT "12397"
+#include "packet.h"
+#include "server_network.h"
+#include "server_error.h"
 
 #define MAX_DATA 4096
-
-void show_network_error(const char *s, int r)
-{
-	fprintf(stderr, "%s: %s\n", s, gai_strerror(r));
-}
 
 /*
  * Technically, we do not need this function, because
@@ -45,18 +42,10 @@ void show_network_error(const char *s, int r)
  * and b) we're ready for IPv6 support when it comes into SDL_net.
  */
 
-void *get_address(struct sockaddr *a)
-{
-	if (a->sa_family == AF_INET)
-	       	return &(((struct sockaddr_in *)a)->sin_addr);
-	else
-		return &(((struct sockaddr_in6 *)a)->sin6_addr);
-}
-
 int main(int argc, char **argv)
 {
 	int server_sock;
-	struct addrinfo hints, *server_info, *p;
+	struct addrinfo hints;
 	struct sockaddr_storage client_addr;
 	char data[MAX_DATA];
 	socklen_t addr_len;
@@ -72,49 +61,12 @@ int main(int argc, char **argv)
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_PASSIVE; /* Get our IP */
 
-	int ret = getaddrinfo(NULL, SERVER_PORT, &hints, &server_info);
+	server_sock = get_address(hints);
 
-	if (ret != 0) {
-		show_network_error("Could not get address info", ret);
+	if (server_sock == -1) {
+		perror("Could not get address");
 		return -1;
 	}
-
-	/* Find a valid address */
-	for (p = server_info; p != NULL; p = p->ai_next) {
-		server_sock = socket(p->ai_family, p->ai_socktype,
-			p->ai_protocol);
-
-		if (server_sock == -1) {
-			perror("Could not create socket");
-			continue;
-		}
-
-		int optval = 1;
-
-		setsockopt(server_sock, SOL_SOCKET, SO_REUSEADDR, &optval,
-			sizeof(optval));
-
-		if (optval != 1) {
-			perror("Could not set socket to reuse address");
-			continue;
-		}
-
-		if (bind(server_sock, p->ai_addr, p->ai_addrlen) == -1) {
-			close(server_sock);
-			perror("Could not bind to socket");
-			continue;
-		}
-
-		/* We got this far, and thus found a match. Take it. */
-		break;	
-	}
-
-	if (p == NULL) {
-		fprintf(stderr, "Exhausted all addresses. Bailing out.\n");
-		return -2;
-	}
-
-	freeaddrinfo(server_info);
 
 	addr_len = sizeof(client_addr);
 
@@ -126,14 +78,14 @@ int main(int argc, char **argv)
 
 		if (packet_size == -1) {
 			perror("Error receiving packet");
-			return -3;
+			return -2;
 		}
 
 		/* Limit string */
 		data[packet_size] = '\0';
 
 		inet_ntop(client_addr.ss_family,
-			get_address((struct sockaddr *)&client_addr),
+			get_address_str((struct sockaddr *)&client_addr),
 			ipstr, sizeof(ipstr));
 
 		printf("Got packet from %s\n", ipstr);
@@ -144,7 +96,7 @@ int main(int argc, char **argv)
 
 		if (json_packet == NULL) {
 			fprintf(stderr, "Could not parse JSON packet\n");
-			return;
+			return -3;
 		}
 
 		if (json_type(json_packet) != JSONObject)
@@ -152,18 +104,12 @@ int main(int argc, char **argv)
 
 		JSON_Object *packet_obj = json_object(json_packet);
 
-		printf("Packet type is \"%s\"\n",
-		       json_object_get_string(packet_obj, "type"));
+		printf("Packet type is \"%s\"\n", packet_get_type(packet_obj));
 
-		int version_major = (int) json_object_dotget_number(packet_obj,
-			"version.major");
-		int version_minor = (int) json_object_dotget_number(packet_obj,
-			"version.minor");
-		int version_patch = (int) json_object_dotget_number(packet_obj,
-			"version.patch");
-
-		printf("Reported version : %d.%d.%d\n",
-		       version_major, version_minor, version_patch);
+		struct version_t client_ver = packet_get_version(packet_obj);
+		
+		printf("Reported version : %d.%d.%d\n", client_ver.major,
+		       client_ver.minor, client_ver.patch);
 
 		printf("\n");
 	}
