@@ -101,21 +101,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 	
-	
-	/* Test */
-	puts("Creating world...");
-	struct world *testWorld = createWorld(10, 10, BLOCK_TYPE_WALL);
-	if (testWorld == NULL) {
-		puts("Could not create world!");
-	} else {
-		puts("Resizing world...");
-		resizeWorld(testWorld, 20, 20);
-		puts("Resizing world...");
-		resizeWorld(testWorld, 5, 5);
-		puts("Freeing world...");
-		freeWorld(testWorld);
-	}
-	/* EOF Test */
+        
 	
 	
 	puts("Created window");

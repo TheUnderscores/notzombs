@@ -1,6 +1,6 @@
 #include "world_data_common.h"
 
-void freeRows(struct world *dest, unsigned int col, unsigned int start_y, unsigned int end_y);
+static void freeRows(struct world *dest, unsigned int col, unsigned int start_y, unsigned int end_y);
 static void freeCol(struct world *dest, unsigned int col);
 
 
@@ -8,23 +8,18 @@ static void freeCol(struct world *dest, unsigned int col);
 
 void freeRows(struct world *dest, unsigned int col, unsigned int start_y, unsigned int end_y)
 {
-	if (col >= dest->w)
+	if (start_y > end_y) {
 		return;
-	if (end_y >= dest->h)
-		end_y = dest->h;
-	if (start_y > end_y)
-		return;
+	}
 	unsigned int row;
-	for (row = start_y; row < end_y; row++)
+	for (row = start_y; row <= end_y; row++)
 		block_common_free(dest->grid[col][row]);
 }
 
 void freeCol(struct world *dest, unsigned int col)
 {
 	struct block_common_t **colData = dest->grid[col];
-	unsigned int row;
-	for (row = 0; row < dest->h; row++)
-	        freeRows(dest, col, 0, dest->h - 1);
+	freeRows(dest, col, 0, dest->h - 1);
 	free(colData);
 }
 
@@ -38,14 +33,26 @@ struct world* createWorld(unsigned int w, unsigned int h, enum block_type defaul
 	newWorld->h = h;
 	newWorld->grid = (struct block_common_t***)
 		malloc(sizeof(struct block_common_t**) * w);
+	if (newWorld->grid == NULL) {
+		fprintf(stderr, "Could not create world! Unable to allocate grid!\n");
+		return NULL;
+	}
 	newWorld->defaultType = defaultType;
 	unsigned int col;
 	for (col = 0; col < h; col++) {
 		newWorld->grid[col] = (struct block_common_t**)
 			malloc(sizeof(struct block_common_t*) * h);
+		if (newWorld->grid[col] == NULL) {
+			fprintf(stderr, "Could not create world! Unable to allocate grid column!\n");
+			return NULL;
+		}
 		unsigned int row;
 		for (row = 0; row < h; row++) {
 			newWorld->grid[col][row] = block_common_new(defaultType);
+			if (newWorld->grid[col][row] == NULL) {
+				fprintf(stderr, "Could not create world!\n");
+				return NULL;
+			}
 		}
 	}
 	
@@ -55,7 +62,8 @@ struct world* createWorld(unsigned int w, unsigned int h, enum block_type defaul
 void freeWorld(struct world *dest)
 {
 	unsigned int col;
-	for (col = 0; col < dest->h; col++){
+	printf("dest->w: %u\n", dest->w);
+	for (col = 0; col < dest->w; col++) {
 		freeCol(dest, col);
 	}
 	free(dest->grid);
@@ -64,19 +72,27 @@ void freeWorld(struct world *dest)
 
 void resizeWorld(struct world *dest, unsigned int new_w, unsigned int new_h)
 {
-	puts("Adjusting height...");
 	if (new_h > dest->h) {
 		unsigned int col;
 		for (col = 0; col < dest->w; col++) {
 			struct block_common_t **newColData = (struct block_common_t**)
 				malloc(sizeof(struct block_common_t*) * new_h);
+			if (newColData == NULL) {
+				fprintf(stderr, "Could not resize world! Unable to allocate column data!\n");
+				return;
+			}
 			unsigned int row;
 			/* Reuse old block data */
-			for (row = 0; row < dest->h - 1; row++)
+			for (row = 0; row < dest->h; row++)
 				newColData[row] = dest->grid[col][row];
 			/* Create new block data */
-			for (row = dest->h; row < new_h - 1; row++)
+			for (row = dest->h; row < new_h; row++) {
 				newColData[row] = block_common_new(dest->defaultType);
+				if (newColData[row] == NULL) {
+					fprintf(stderr, "Could not resize world!\n");
+					return;
+				}
+			}
 		        free(dest->grid[col]);
 			dest->grid[col] = newColData;
 		}
@@ -87,9 +103,13 @@ void resizeWorld(struct world *dest, unsigned int new_w, unsigned int new_h)
 		for (col = 0; col < dest->w; col++) {
 			struct block_common_t** newColData = (struct block_common_t**)
 				malloc(sizeof(struct block_common_t*) * new_h);
+			if (newColData == NULL) {
+				fprintf(stderr, "Could not resize world! Unable to allocate column data!\n");
+				return;
+			}
 			unsigned int row;
 			/* Reuse block data */
-			for (row = 0; row < new_h - 1; row++)
+			for (row = 0; row < new_h; row++)
 				newColData[row] = dest->grid[col][row];
 		        /* Free rows that have been cut-off */
 			freeRows(dest, col, new_h, dest->h - 1);
@@ -98,35 +118,44 @@ void resizeWorld(struct world *dest, unsigned int new_w, unsigned int new_h)
 		}
 		dest->h = new_h;
 	}
-	
-	puts("Adjusting width...");
+        
 	if (new_w > dest->w) {
-		puts("Allocating new grid data...");
 		struct block_common_t ***newGridData = (struct block_common_t***)
-			malloc(sizeof(struct block_common_t) * new_w);
+			malloc(sizeof(struct block_common_t**) * new_w);
+		if (newGridData == NULL) {
+			fprintf(stderr, "Could not resize world! Unable to allocate grid data!\n");
+			return;
+		}
 		unsigned int col;
 		/* Reused block data */
-		puts("Reusing block data...");
-		for (col = 0; col < dest->w - 1; col++)
+		for (col = 0; col < dest->w; col++)
 			newGridData[col] = dest->grid[col];
 		/* Add new block data */
-		puts("Adding new block data...");
-
-		for (col = dest->w; col < new_w - 1; col++) {
-			printf("col: %d", col);
+		for (col = dest->w; col < new_w; col++) {
+			newGridData[col] = (struct block_common_t**)
+				malloc(sizeof(struct block_common_t*) * new_h);
 			unsigned int row;
-			for (row = 0; row < new_h - 1; row++)
+			for (row = 0; row < new_h; row++) {
 				newGridData[col][row] = block_common_new(dest->defaultType);
+				if (newGridData[col][row] == NULL) {
+					fprintf(stderr, "Could not resize world!\n");
+					return;
+				}
+			}
 		}
 		free(dest->grid);
 		dest->grid = newGridData;
 		dest->w = new_w;
 	} else if (new_w < dest->w) {
 		struct block_common_t ***newGridData = (struct block_common_t***)
-			malloc(sizeof(struct block_common_t) * new_w);
+			malloc(sizeof(struct block_common_t**) * new_w);
+		if (newGridData == NULL) {
+			fprintf(stderr, "Could not resize world! Unable to allocate grid data!\n");
+			return;
+		}
 		unsigned int col;
 		/* Reused block data */
-		for (col = 0; col < new_w - 1; col++)
+		for (col = 0; col < new_w; col++)
 			newGridData[col] = dest->grid[col];
 		/* Free columns that've been cut-off */
 		for (col = new_w; col < dest->w; col++)
