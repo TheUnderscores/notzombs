@@ -27,6 +27,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include "parson.h"
+
 #define SERVER_PORT "12397"
 
 #define MAX_DATA 4096
@@ -48,7 +50,7 @@ void *get_address(struct sockaddr *a)
 	if (a->sa_family == AF_INET)
 	       	return &(((struct sockaddr_in *)a)->sin_addr);
 	else
-		return &(((struct sockaddr_in6 *)a)->sin6_addr);		 
+		return &(((struct sockaddr_in6 *)a)->sin6_addr);
 }
 
 int main(int argc, char **argv)
@@ -135,7 +137,34 @@ int main(int argc, char **argv)
 			ipstr, sizeof(ipstr));
 
 		printf("Got packet from %s\n", ipstr);
-		printf("Packet is %d bytes and contains \"%s\"\n",
+		printf("Packet is %d bytes and contains \"%s\"\n\n",
 			packet_size, data);
+
+		JSON_Value *json_packet = json_parse_string(data);
+
+		if (json_packet == NULL) {
+			fprintf(stderr, "Could not parse JSON packet\n");
+			return;
+		}
+
+		if (json_type(json_packet) != JSONObject)
+			fprintf(stderr, "json_pack is not an object.\n");
+
+		JSON_Object *packet_obj = json_object(json_packet);
+
+		printf("Packet type is \"%s\"\n",
+		       json_object_get_string(packet_obj, "type"));
+
+		int version_major = (int) json_object_dotget_number(packet_obj,
+			"version.major");
+		int version_minor = (int) json_object_dotget_number(packet_obj,
+			"version.minor");
+		int version_patch = (int) json_object_dotget_number(packet_obj,
+			"version.patch");
+
+		printf("Reported version : %d.%d.%d\n",
+		       version_major, version_minor, version_patch);
+
+		printf("\n");
 	}
 }
