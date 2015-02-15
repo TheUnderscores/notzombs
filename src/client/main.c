@@ -47,27 +47,33 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
+	puts("Video initialized");
+
 	if (SDLNet_Init()) {
 		show_SDLNet_error("Could not initialize SDL_net");
 		return -1;
 	}
 
+	puts("Networking initialized");
+
 	/* Get our network connection ready */
 	IPaddress server_ip;
-	SDLNet_ResolveHost(&server_ip, argv[1], 12397);
-
-	if (server_ip.host == INADDR_NONE) {
-		/* No real error, so just print to stderr */
-		fprintf(stderr, "Could not resolve address\n");
+	
+	if (SDLNet_ResolveHost(&server_ip, "127.0.0.1", 12397) == -1) {
+		show_SDLNet_error("Could not resolve address");
 		return -1;
 	}
 
-	UDPsocket client_socket = SDLNet_UDP_Open(0);
+	printf("Resolved host \"%d\"\n", server_ip.host);
 
-	if (client_socket == NULL) {
+	UDPsocket client_socket;
+
+	if (!(client_socket = SDLNet_UDP_Open(0))) {
 		show_SDLNet_error("Could not create UDP socket");
 		return -1;
 	}
+
+	puts("Created UDP socket");
 
 	if (SDLNet_UDP_Bind(client_socket, 0, &server_ip) == -1) {
 		show_SDLNet_error("Could not bind socket to address");
@@ -82,15 +88,20 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	my_window = SDL_CreateWindow("Coms Test Client",
-				     SDL_WINDOWPOS_CENTERED,
-				     SDL_WINDOWPOS_CENTERED,
-				     640, 480, 0);
+	puts("Allocated UDP packet memory");
+
+	my_window = SDL_CreateWindow("Not Zombs Client",
+		SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+		640, 480, 0);
 
 	if (my_window == NULL) {
 		show_SDL_error("Could not create window");
 		return -1;
 	}
+
+	puts("Created window");
+
+	puts("Going into main loop");
 
 	while (1) {
 		SDL_Event client_event;
@@ -101,7 +112,7 @@ int main(int argc, char **argv)
 
 		int recv_stat = SDLNet_UDP_Recv(client_socket, recv_packet);
 
-		if (recv_stat == 1)
+		if (recv_packet->len > 0)
 			printf("Got %d bytes - \"%s\"\n", recv_packet->len,
 			       recv_packet->data);
 		else if (recv_stat == -1)
