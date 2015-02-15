@@ -35,13 +35,6 @@
 
 #define MAX_DATA 4096
 
-/*
- * Technically, we do not need this function, because
- * SDL_net can only use IPv4 addresses. /However/, this function
- * is good because a) it's a simple call for the raw address data,
- * and b) we're ready for IPv6 support when it comes into SDL_net.
- */
-
 int main(int argc, char **argv)
 {
 	int server_sock;

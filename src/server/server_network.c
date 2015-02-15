@@ -28,6 +28,13 @@
 
 #define SERVER_PORT "12397"
 
+/*
+ * Technically, we do not need this function, because
+ * SDL_net can only use IPv4 addresses. /However/, this function
+ * is good because a) it's a simple call for the raw address data,
+ * and b) we're ready for IPv6 support when it comes into SDL_net.
+ */
+
 void *get_address_str(struct sockaddr *a)
 {
 	if (a->sa_family == AF_INET)
