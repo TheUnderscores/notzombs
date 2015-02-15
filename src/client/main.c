@@ -18,12 +18,9 @@
 
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_net.h>
+#include <SDL2/SDL_timer.h>
 
 #include <stdio.h>
-
-/* Test */
-#include "world_data_common.h"
-/* EOF Test */
 
 #define UNUSED(x) (void)(x)
 
@@ -47,7 +44,12 @@ int main(int argc, char **argv)
 	UNUSED(my_surface);
 
 	if (SDL_Init(SDL_INIT_VIDEO)) {
-		show_SDL_error("Could not initialize SDL");
+		show_SDL_error("Could not initialize SDL video");
+		return -1;
+	}
+	
+	if (SDL_Init(SDL_INIT_TIMER)) {
+		show_SDL_error("Could not initialize SDL timers");
 		return -1;
 	}
 
@@ -107,8 +109,14 @@ int main(int argc, char **argv)
 	puts("Created window");
 
 	puts("Going into main loop");
-
+	
+	/* Delta time. Pass this to functions that need to know the */
+	/* change in time */
+	int dt = SDL_GetTicks();
+	
 	while (1) {
+		int startTime = SDL_GetTicks();
+		
 		SDL_Event client_event;
 
 		SDL_WaitEventTimeout(&client_event, 500);
@@ -124,6 +132,8 @@ int main(int argc, char **argv)
 			show_SDLNet_error("No UDP packet received");
 		else if (recv_stat == -1)
 			show_SDLNet_error("Could not get UDP packet");
+		
+		dt = SDL_GetTicks() - startTime;
 	}
 	
 	SDL_DestroyWindow(my_window);

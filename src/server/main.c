@@ -27,13 +27,23 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_timer.h>
+
 #include "parson.h"
 
 #include "packet.h"
 #include "server_network.h"
 #include "server_error.h"
 
+
 #define MAX_DATA 4096
+
+/* THIS IS A DUPLICATE OF A FUNCTION IN ../client/main.c! */
+void show_SDL_error(const char *msg)
+{
+	fprintf(stderr, "%s: %s\n", msg, SDL_GetError());
+}
 
 int main(int argc, char **argv)
 {
@@ -62,10 +72,21 @@ int main(int argc, char **argv)
 	}
 
 	addr_len = sizeof(client_addr);
-
+        
+	if (SDL_Init(SDL_INIT_TIMER)) {
+		show_SDL_error("Could not initialize SDL timer");
+		return -1;
+	}
+	
 	puts("Entering main loop...\n");
 	
+	/* Delta time. Pass this to functions that need to know the */
+	/* change in time */
+	int dt = SDL_GetTicks();
+
 	while (1) {
+		int startTime = SDL_GetTicks();
+		
 		int packet_size = recvfrom(server_sock, data, MAX_DATA - 1,
 			0, (struct sockaddr *)&client_addr, &addr_len);
 
@@ -105,5 +126,7 @@ int main(int argc, char **argv)
 		       client_ver.minor, client_ver.patch);
 
 		printf("\n");
+	        
+		dt = SDL_GetTicks() - startTime;
 	}
 }
